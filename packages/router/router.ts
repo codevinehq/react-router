@@ -1416,6 +1416,7 @@ export function createRouter(init: RouterInit): Router {
       init.history,
       location,
       pendingNavigationController.signal,
+      !initialized,
       opts && opts.submission
     );
     let pendingActionData: RouteData | undefined;
@@ -1876,6 +1877,7 @@ export function createRouter(init: RouterInit): Router {
       init.history,
       path,
       abortController.signal,
+      !initialized,
       submission
     );
     fetchControllers.set(key, abortController);
@@ -1945,7 +1947,8 @@ export function createRouter(init: RouterInit): Router {
     let revalidationRequest = createClientSideRequest(
       init.history,
       nextLocation,
-      abortController.signal
+      abortController.signal,
+      !initialized
     );
     let routesToUse = inFlightDataRoutes || dataRoutes;
     let matches =
@@ -2122,7 +2125,8 @@ export function createRouter(init: RouterInit): Router {
     let fetchRequest = createClientSideRequest(
       init.history,
       path,
-      abortController.signal
+      abortController.signal,
+      !initialized
     );
     fetchControllers.set(key, abortController);
 
@@ -2342,7 +2346,12 @@ export function createRouter(init: RouterInit): Router {
         if (f.matches && f.match && f.controller) {
           return callLoaderOrAction(
             "loader",
-            createClientSideRequest(init.history, f.path, f.controller.signal),
+            createClientSideRequest(
+              init.history,
+              f.path,
+              f.controller.signal,
+              !initialized
+            ),
             f.match,
             f.matches,
             manifest,
@@ -3970,10 +3979,15 @@ function createClientSideRequest(
   history: History,
   location: string | Location,
   signal: AbortSignal,
+  initial?: boolean,
   submission?: Submission
 ): Request {
   let url = history.createURL(stripHashFromPath(location)).toString();
   let init: RequestInit = { signal };
+
+  if (initial) {
+    init.headers = { "X-Remix-Initial-Load": "yes" };
+  }
 
   if (submission && isMutationMethod(submission.formMethod)) {
     let { formMethod, formEncType } = submission;
