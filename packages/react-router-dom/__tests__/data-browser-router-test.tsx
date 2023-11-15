@@ -1665,14 +1665,12 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route element={<Layout />}>
-            <Route index loader={() => "index"} element={<h1>index</h1>} />
-            <Route path="1" loader={() => "1"} element={<h1>Page 1</h1>} />
-            <Route path="2" loader={() => "2"} element={<h1>Page 2</h1>} />
+            <Route index element={<h1>index</h1>} />
+            <Route path="1" element={<h1>Page 1</h1>} />
+            <Route path="2" element={<h1>Page 2</h1>} />
           </Route>
         ),
-        {
-          hydrationData: {},
-        }
+        {}
       );
       let { container } = render(<RouterProvider router={router} />);
 
@@ -1734,7 +1732,7 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route element={<Layout />}>
-            <Route index loader={() => "index"} element={<h1>Index Page</h1>} />
+            <Route index element={<h1>Index Page</h1>} />
             <Route
               path="form"
               action={() => "action data"}
@@ -1743,9 +1741,7 @@ function testDomRouter(
             <Route path="result" element={<h1>Result Page</h1>} />
           </Route>
         ),
-        {
-          hydrationData: {},
-        }
+        {}
       );
       let { container } = render(<RouterProvider router={router} />);
 
@@ -1799,7 +1795,7 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route element={<Layout />}>
-            <Route index loader={() => "index"} element={<h1>Index Page</h1>} />
+            <Route index element={<h1>Index Page</h1>} />
             <Route
               path="form"
               action={() =>
@@ -1864,13 +1860,12 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route element={<Layout />}>
-            <Route index loader={() => "index"} element={<h1>index</h1>} />
+            <Route index element={<h1>index</h1>} />
             <Route path="1" loader={() => "1"} element={<h1>Page 1</h1>} />
             <Route path="2" loader={() => "2"} element={<h1>Page 2</h1>} />
           </Route>
         ),
         {
-          hydrationData: {},
           window: getWindow("/"),
         }
       );
@@ -1938,18 +1933,12 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route element={<Layout />}>
-            <Route index loader={() => "index"} element={<h1>index</h1>} />
-            <Route path="1" loader={() => "1"} element={<h1>Page 1</h1>} />
-            <Route
-              path="2"
-              action={() => "action"}
-              loader={() => "2"}
-              element={<h1>Page 2</h1>}
-            />
+            <Route index element={<h1>index</h1>} />
+            <Route path="1" element={<h1>Page 1</h1>} />
+            <Route path="2" action={() => "action"} element={<h1>Page 2</h1>} />
           </Route>
         ),
         {
-          hydrationData: {},
           window: getWindow("/"),
         }
       );
@@ -2033,17 +2022,11 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route element={<Layout />}>
-            <Route index loader={() => "index"} element={<h1>index</h1>} />
-            <Route
-              path="1"
-              action={() => "action"}
-              loader={() => "1"}
-              element={<h1>Page 1</h1>}
-            />
+            <Route index element={<h1>index</h1>} />
+            <Route path="1" action={() => "action"} element={<h1>Page 1</h1>} />
           </Route>
         ),
         {
-          hydrationData: {},
           window: getWindow("/"),
         }
       );
@@ -2132,7 +2115,7 @@ function testDomRouter(
       let testWindow = getWindow("/base/path");
       let router = createTestRouter(
         createRoutesFromElements(<Route path="path" element={<Comp />} />),
-        { basename: "/base", hydrationData: {}, window: testWindow }
+        { basename: "/base", window: testWindow }
       );
       let { container } = render(<RouterProvider router={router} />);
 
@@ -2209,7 +2192,7 @@ function testDomRouter(
         ),
         {
           basename: "/base",
-          hydrationData: {},
+
           window: testWindow,
         }
       );
@@ -2292,8 +2275,9 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route
+            id="index"
             path="/"
-            action={async ({ request }) => {
+            action={async () => {
               throw new Error("Should not hit this");
             }}
             loader={() => loaderDefer.promise}
@@ -2301,7 +2285,7 @@ function testDomRouter(
           />
         ),
         {
-          hydrationData: {},
+          hydrationData: { loaderData: { index: "Initial Data" } },
           window: getWindow("/"),
         }
       );
@@ -2335,7 +2319,9 @@ function testDomRouter(
           <p>
             idle
           </p>
-          <p />
+          <p>
+            Initial Data
+          </p>
         </div>"
       `);
 
@@ -2349,7 +2335,9 @@ function testDomRouter(
           <p>
             loading
           </p>
-          <p />
+          <p>
+            Initial Data
+          </p>
         </div>"
       `);
 
@@ -2440,6 +2428,7 @@ function testDomRouter(
       let router = createTestRouter(
         createRoutesFromElements(
           <Route
+            id="index"
             path="/"
             action={async ({ request }) => {
               let resolvedValue = await actionDefer.promise;
@@ -2451,7 +2440,7 @@ function testDomRouter(
           />
         ),
         {
-          hydrationData: {},
+          hydrationData: { loaderData: { index: "Initial Data" } },
           window: getWindow("/"),
         }
       );
@@ -3873,12 +3862,14 @@ function testDomRouter(
         let router = createTestRouter(
           createRoutesFromElements(
             <Route
+              id="parent"
               path="/parent"
               element={<Outlet />}
               action={() => "PARENT ACTION"}
               loader={() => "PARENT LOADER"}
             >
               <Route
+                id="index"
                 index
                 element={<Index />}
                 action={() => "INDEX ACTION"}
@@ -4807,6 +4798,7 @@ function testDomRouter(
           createRoutesFromElements(
             <>
               <Route
+                id="index"
                 path="/"
                 element={<Comp />}
                 action={async ({ request }) => {
@@ -4825,7 +4817,7 @@ function testDomRouter(
           ),
           {
             window: getWindow("/"),
-            hydrationData: { loaderData: { "0": null } },
+            hydrationData: { loaderData: { index: null } },
           }
         );
         let { container } = render(<RouterProvider router={router} />);
