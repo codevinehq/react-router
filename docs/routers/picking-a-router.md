@@ -16,6 +16,7 @@ In v6.4, new routers were introduced that support the new [data APIs][data-apis]
 - [`createMemoryRouter`][creatememoryrouter]
 - [`createHashRouter`][createhashrouter]
 - [`createStaticRouter`][createstaticrouter]
+- [`createSearchRouter`][createsearchrouter]
 
 The following routers do not support the data APIs:
 
@@ -24,6 +25,7 @@ The following routers do not support the data APIs:
 - [`<HashRouter>`][hashrouter]
 - [`<NativeRouter>`][nativerouter]
 - [`<StaticRouter>`][staticrouter]
+- [`<SearchRouter>`][searchrouter]
 
 We recommend updating your app to use one of the new routers from 6.4. The data APIs are currently not supported in React Native, but should be eventually.
 
@@ -63,7 +65,9 @@ If you're hosting your app on a static file server, you'll need to configure it 
 
 If for some reason you can't use the full URL, [`createHashRouter`][createhashrouter] is the next best thing.
 
-If you're not interested in the data APIs, you can continue to use [`<BrowserRouter>`][browserrouter] or, if you can't use full URLs, [`<HashRouter>`][hashrouter].
+If you do not control the url of your app, you can use [`createSearchRouter`][createsearchrouter] to use the query string to store the location state.
+
+If you're not interested in the data APIs, you can continue to use [`<BrowserRouter>`][browserrouter] or, if you can't use full URLs, [`<HashRouter>`][hashrouter], or [`<SearchRouter>`][searchrouter].
 
 ## Testing
 

@@ -52,6 +52,8 @@ export type {
   BrowserHistoryOptions,
   HashHistory,
   HashHistoryOptions,
+  SearchHistory,
+  SearchHistoryOptions,
   History,
   InitialEntry,
   Location,
@@ -66,6 +68,7 @@ export {
   createBrowserHistory,
   createHashHistory,
   createMemoryHistory,
+  createSearchHistory,
   createPath,
   parsePath,
 } from "./history";

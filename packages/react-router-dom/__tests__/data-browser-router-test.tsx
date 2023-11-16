@@ -19,6 +19,7 @@ import {
   RouterProvider,
   createBrowserRouter,
   createHashRouter,
+  createSearchRouter,
   createRoutesFromElements,
   defer,
   isRouteErrorResponse,
@@ -34,23 +35,31 @@ import {
   useRouteError,
   useSearchParams,
   useSubmit,
+  parsePath,
 } from "react-router-dom";
 
 import getHtml from "../../react-router/__tests__/utils/getHtml";
 import { createDeferred } from "../../router/__tests__/utils/utils";
 
 testDomRouter("<DataBrowserRouter>", createBrowserRouter, (url) =>
-  getWindowImpl(url, false)
+  getWindowImpl(url, "path")
 );
 
 testDomRouter("<DataHashRouter>", createHashRouter, (url) =>
-  getWindowImpl(url, true)
+  getWindowImpl(url, "hash")
+);
+
+testDomRouter("<DataSearchRouter>", createSearchRouter, (url) =>
+  getWindowImpl(url, "search")
 );
 
 function testDomRouter(
   name: string,
-  createTestRouter: typeof createBrowserRouter | typeof createHashRouter,
-  getWindow: (initialUrl: string, isHash?: boolean) => Window
+  createTestRouter:
+    | typeof createBrowserRouter
+    | typeof createHashRouter
+    | typeof createSearchRouter,
+  getWindow: (initialUrl: string) => Window
 ) {
   // Utility to assert location info based on the type of router
   function assertLocation(
@@ -61,6 +70,11 @@ function testDomRouter(
     if (name === "<DataHashRouter>") {
       // eslint-disable-next-line jest/no-conditional-expect
       expect(testWindow.location.hash).toEqual("#" + pathname + (search || ""));
+    } else if (name === "<DataSearchRouter>") {
+      // eslint-disable-next-line jest/no-conditional-expect
+      expect(testWindow.location.search.replace("=&", "&")).toEqual(
+        (search ? search + "&" : "?") + "page=" + encodeURIComponent(pathname)
+      );
     } else {
       // eslint-disable-next-line jest/no-conditional-expect
       expect(testWindow.location.pathname).toEqual(pathname);
@@ -7427,9 +7441,31 @@ function testDomRouter(
   });
 }
 
-function getWindowImpl(initialUrl: string, isHash = false): Window {
+type Mode = "path" | "search" | "hash";
+
+function getWindowImpl(initialUrl: string, mode: Mode = "path"): Window {
   // Need to use our own custom DOM in order to get a working history
   const dom = new JSDOM(`<!DOCTYPE html>`, { url: "http://localhost/" });
-  dom.window.history.replaceState(null, "", (isHash ? "#" : "") + initialUrl);
+  const { pathname, hash, search } = parsePath(initialUrl);
+
+  if (mode === "search") {
+    dom.window.history.replaceState(
+      null,
+      "",
+      (search ? search + "&" : "?") +
+        "page=" +
+        encodeURIComponent(pathname || "/") +
+        (hash || "")
+    );
+  }
+
+  if (mode === "hash") {
+    dom.window.history.replaceState(null, "", `/#${initialUrl}`);
+  }
+
+  if (mode === "path") {
+    dom.window.history.replaceState(null, "", initialUrl);
+  }
+
   return dom.window as unknown as Window;
 }

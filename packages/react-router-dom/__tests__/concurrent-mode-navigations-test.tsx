@@ -150,7 +150,7 @@ describe("Handles concurrent mode features during navigations", () => {
 
       let { container } = render(
         <BrowserRouter
-          window={getWindowImpl("/", false)}
+          window={getWindowImpl("/", "path")}
           future={{ v7_startTransition: true }}
         >
           <Routes>
@@ -185,7 +185,7 @@ describe("Handles concurrent mode features during navigations", () => {
 
       let { container } = render(
         <HashRouter
-          window={getWindowImpl("/", true)}
+          window={getWindowImpl("/", "hash")}
           future={{ v7_startTransition: true }}
         >
           <Routes>
@@ -315,7 +315,7 @@ describe("Handles concurrent mode features during navigations", () => {
 
       let { container } = render(
         <BrowserRouter
-          window-={getWindowImpl("/", true)}
+          window-={getWindowImpl("/", "hash")}
           future={{ v7_startTransition: true }}
         >
           <Routes>
@@ -336,7 +336,7 @@ describe("Handles concurrent mode features during navigations", () => {
 
       let { container } = render(
         <HashRouter
-          window-={getWindowImpl("/", true)}
+          window-={getWindowImpl("/", "hash")}
           future={{ v7_startTransition: true }}
         >
           <Routes>
@@ -373,9 +373,23 @@ describe("Handles concurrent mode features during navigations", () => {
   });
 });
 
-function getWindowImpl(initialUrl: string, isHash = false): Window {
+type Mode = "path" | "search" | "hash";
+
+function getWindowImpl(initialUrl: string, mode: Mode = "path"): Window {
   // Need to use our own custom DOM in order to get a working history
   const dom = new JSDOM(`<!DOCTYPE html>`, { url: "http://localhost/" });
-  dom.window.history.replaceState(null, "", (isHash ? "#" : "") + initialUrl);
+
+  if (mode === "search") {
+    dom.window.history.replaceState(null, "", `/?page=${initialUrl}`);
+  }
+
+  if (mode === "hash") {
+    dom.window.history.replaceState(null, "", `/#${initialUrl}`);
+  }
+
+  if (mode === "path") {
+    dom.window.history.replaceState(null, "", initialUrl);
+  }
+
   return dom.window as unknown as Window;
 }

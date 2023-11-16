@@ -8,8 +8,10 @@ import {
   Route,
   RouterProvider,
   Routes,
+  SearchRouter,
   createBrowserRouter,
   createHashRouter,
+  createSearchRouter,
 } from "react-router-dom";
 import * as TestRenderer from "react-test-renderer";
 
@@ -904,6 +906,40 @@ describe("<Link> href", () => {
       });
       expect(renderer.root.findByType("a").props.href).toEqual(
         "#/path?search=value#hash"
+      );
+    });
+  });
+
+  describe("when using a search router", () => {
+    it("renders proper <a href> for SearchRouter", () => {
+      let renderer: TestRenderer.ReactTestRenderer;
+      TestRenderer.act(() => {
+        renderer = TestRenderer.create(
+          <SearchRouter>
+            <Routes>
+              <Route path="/" element={<Link to="/path?search=value#hash" />} />
+            </Routes>
+          </SearchRouter>
+        );
+      });
+      expect(renderer.root.findByType("a").props.href).toEqual(
+        "?search=value&page=%2Fpath#hash"
+      );
+    });
+
+    it("renders proper <a href> for createSearchRouter", () => {
+      let renderer: TestRenderer.ReactTestRenderer;
+      TestRenderer.act(() => {
+        let router = createSearchRouter([
+          {
+            path: "/",
+            element: <Link to="/path?search=value#hash">Link</Link>,
+          },
+        ]);
+        renderer = TestRenderer.create(<RouterProvider router={router} />);
+      });
+      expect(renderer.root.findByType("a").props.href).toEqual(
+        "?search=value&page=%2Fpath#hash"
       );
     });
   });

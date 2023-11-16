@@ -478,6 +478,121 @@ export function createHashHistory(
 //#endregion
 
 ////////////////////////////////////////////////////////////////////////////////
+//#region Search History
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * A search history stores the current location in the search portion
+ * of the URL in a web browser environment.
+ *
+ * This is ideal for apps that do not control the host page for some reason,
+ * for example embedded widgets.
+ *
+ * @see https://github.com/remix-run/history/tree/main/docs/api-reference.md#searchhistory
+ */
+export interface SearchHistory extends UrlHistory {}
+
+export type SearchHistoryOptions = UrlHistoryOptions & {
+  param?: string;
+  merge?: boolean;
+};
+
+/**
+ * Search history stores the location in window.location.hash. This makes it ideal
+ * for situations where you don't want to send the location to the server for
+ * some reason, either because you do cannot configure it or the URL space is
+ * reserved for something else.
+ *
+ * @see https://github.com/remix-run/history/tree/main/docs/api-reference.md#createsearchhistory
+ */
+export function createSearchHistory(
+  options: SearchHistoryOptions = {}
+): SearchHistory {
+  const pageParam = options.param || "page";
+  const shouldMerge = options.merge || false;
+
+  function createSearchLocation(
+    window: Window,
+    globalHistory: Window["history"]
+  ) {
+    let { search, hash } = window.location;
+
+    const params = new URLSearchParams(search);
+    let pathname = params.get(pageParam) || "/";
+
+    // Search URL should always have a leading / just like window.location.pathname
+    // does, so if an app ends up at a route like /#something then we add a
+    // leading slash so all of our path-matching behaves the same as if it would
+    // in a browser router.  This is particularly important when there exists a
+    // root splat route (<Route path="*">) since that matches internally against
+    // "/*" and we'd expect /#something to 404 in a hash router app.
+    if (!pathname.startsWith("/") && !pathname.startsWith(".")) {
+      pathname = "/" + pathname;
+    }
+
+    params.delete(pageParam);
+
+    const nextSearch = params.toString();
+
+    return createLocation(
+      "",
+      {
+        pathname,
+        search: nextSearch ? "?" + nextSearch : "",
+        hash,
+      },
+      // state defaults to `null` because `window.history.state` does
+      (globalHistory.state && globalHistory.state.usr) || null,
+      (globalHistory.state && globalHistory.state.key) || "default"
+    );
+  }
+
+  function createSearchHref(window: Window, to: To) {
+    let base = window.document.querySelector("base");
+
+    const {
+      search,
+      pathname = "/",
+      hash,
+    } = typeof to === "string" ? parsePath(to) : to;
+    const nextParams = new URLSearchParams(search);
+    const currentParams = new URLSearchParams(window.location.search);
+
+    nextParams.set(
+      pageParam,
+      base ? base.getAttribute("href") + pathname : pathname
+    );
+
+    if (shouldMerge) {
+      for (const [key, value] of currentParams.entries()) {
+        if (!nextParams.has(key)) {
+          nextParams.set(key, value);
+        }
+      }
+    }
+
+    return "?" + nextParams.toString() + hash;
+  }
+
+  function validateSearchLocation(location: Location, to: To) {
+    warning(
+      location.pathname.charAt(0) === "/",
+      `relative pathnames are not supported in search history.push(${JSON.stringify(
+        to
+      )})`
+    );
+  }
+
+  return getUrlBasedHistory(
+    createSearchLocation,
+    createSearchHref,
+    validateSearchLocation,
+    options
+  );
+}
+//#endregion
+
+////////////////////////////////////////////////////////////////////////////////
 //#region UTILS
 ////////////////////////////////////////////////////////////////////////////////
 

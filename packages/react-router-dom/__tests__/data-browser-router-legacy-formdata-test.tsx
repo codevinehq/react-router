@@ -16,11 +16,11 @@ import {
 } from "react-router-dom";
 
 testDomRouter("<DataBrowserRouter>", createBrowserRouter, (url) =>
-  getWindowImpl(url, false)
+  getWindowImpl(url, "path")
 );
 
 testDomRouter("<DataHashRouter>", createHashRouter, (url) =>
-  getWindowImpl(url, true)
+  getWindowImpl(url, "hash")
 );
 
 function testDomRouter(
@@ -120,9 +120,23 @@ function testDomRouter(
   });
 }
 
-function getWindowImpl(initialUrl: string, isHash = false): Window {
+type Mode = "path" | "search" | "hash";
+
+function getWindowImpl(initialUrl: string, mode: Mode = "path"): Window {
   // Need to use our own custom DOM in order to get a working history
   const dom = new JSDOM(`<!DOCTYPE html>`, { url: "http://localhost/" });
-  dom.window.history.replaceState(null, "", (isHash ? "#" : "") + initialUrl);
+
+  if (mode === "search") {
+    dom.window.history.replaceState(null, "", `/?page=${initialUrl}`);
+  }
+
+  if (mode === "hash") {
+    dom.window.history.replaceState(null, "", `/#${initialUrl}`);
+  }
+
+  if (mode === "path") {
+    dom.window.history.replaceState(null, "", initialUrl);
+  }
+
   return dom.window as unknown as Window;
 }

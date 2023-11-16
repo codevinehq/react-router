@@ -50,11 +50,13 @@ import type {
   RouterState,
   RouterSubscriber,
   BlockerFunction,
+  SearchHistory,
 } from "@remix-run/router";
 import {
   createRouter,
   createBrowserHistory,
   createHashHistory,
+  createSearchHistory,
   joinPaths,
   stripBasename,
   UNSAFE_ErrorResponseImpl as ErrorResponseImpl,
@@ -261,6 +263,27 @@ export function createHashRouter(
       v7_prependBasename: true,
     },
     history: createHashHistory({ window: opts?.window }),
+    hydrationData: opts?.hydrationData || parseHydrationData(),
+    routes,
+    mapRouteProperties,
+    window: opts?.window,
+  }).initialize();
+}
+
+export function createSearchRouter(
+  routes: RouteObject[],
+  opts?: DOMRouterOpts & { param?: string }
+): RemixRouter {
+  return createRouter({
+    basename: opts?.basename,
+    future: {
+      ...opts?.future,
+      v7_prependBasename: true,
+    },
+    history: createSearchHistory({
+      window: opts?.window,
+      param: opts?.param ? opts.param : "page",
+    }),
     hydrationData: opts?.hydrationData || parseHydrationData(),
     routes,
     mapRouteProperties,
@@ -772,6 +795,58 @@ export function HashRouter({
   let historyRef = React.useRef<HashHistory>();
   if (historyRef.current == null) {
     historyRef.current = createHashHistory({ window, v5Compat: true });
+  }
+
+  let history = historyRef.current;
+  let [state, setStateImpl] = React.useState({
+    action: history.action,
+    location: history.location,
+  });
+  let { v7_startTransition } = future || {};
+  let setState = React.useCallback(
+    (newState: { action: NavigationType; location: Location }) => {
+      v7_startTransition && startTransitionImpl
+        ? startTransitionImpl(() => setStateImpl(newState))
+        : setStateImpl(newState);
+    },
+    [setStateImpl, v7_startTransition]
+  );
+
+  React.useLayoutEffect(() => history.listen(setState), [history, setState]);
+
+  return (
+    <Router
+      basename={basename}
+      children={children}
+      location={state.location}
+      navigationType={state.action}
+      navigator={history}
+    />
+  );
+}
+
+export interface SearchRouterProps {
+  basename?: string;
+  children?: React.ReactNode;
+  future?: Partial<FutureConfig>;
+  window?: Window;
+  param?: string;
+}
+
+/**
+ * A `<Router>` for use in web browsers. Stores the location in the search
+ * portion of the URL so it is not sent to the server.
+ */
+export function SearchRouter({
+  basename,
+  children,
+  future,
+  window,
+  param,
+}: SearchRouterProps) {
+  let historyRef = React.useRef<SearchHistory>();
+  if (historyRef.current == null) {
+    historyRef.current = createSearchHistory({ window, v5Compat: true, param });
   }
 
   let history = historyRef.current;
